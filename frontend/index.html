@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#0a0f0a"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Flora Banks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #070c07;
+  --bg2: #0d140d;
+  --bg3: #131a13;
+  --surface: #171f17;
+  --surface2: #1e281e;
+  --border: #243024;
+  --green: #4ade80;
+  --green-dim: #22c55e;
+  --green-dark: #166534;
+  --green-glow: rgba(74,222,128,0.12);
+  --red: #f87171;
+  --red-dim: #ef4444;
+  --text: #e8f5e8;
+  --text2: #9ab09a;
+  --text3: #5a6e5a;
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  overflow: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:9999;
+  opacity:0.6;
+}
+
+/* ── APP SHELL ── */
+#app { height:100vh; display:flex; flex-direction:column; }
+
+/* ── SCREENS ── */
+.screen { display:none; flex-direction:column; height:100%; }
+.screen.active { display:flex; }
+
+/* ── LOGIN ── */
+#screen-login {
+  justify-content: center;
+  align-items: center;
+  padding: 32px 24px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(74,222,128,0.06) 0%, transparent 70%);
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.login-logo .wordmark {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--green);
+  line-height: 1;
+}
+
+.login-logo .sub {
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+}
+
+.tab-switch {
+  display: flex;
+  background: var(--bg2);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  margin-bottom: 24px;
+  gap: 3px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background: var(--green);
+  color: #000;
+  font-weight: 700;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+
+.field input {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.field input:focus { border-color: var(--green); }
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--green);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:active { opacity: 0.8; }
+
+.msg-error {
+  font-size: 12px;
+  color: var(--red);
+  text-align: center;
+  margin-top: 12px;
+  min-height: 18px;
+}
+
+/* ── HEADER ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.topbar-user {
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 1px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  padding: 6px;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+.btn-icon:active { color: var(--green); }
+
+/* ── SCROLL AREA ── */
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px;
+}
+
+.scroll-area::-webkit-scrollbar { width: 3px; }
+.scroll-area::-webkit-scrollbar-track { background: transparent; }
+.scroll-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  display: flex;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 8px 0 20px;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  transition: color 0.2s;
+}
+
+.nav-item.active { color: var(--green); }
+.nav-item svg { width: 22px; height: 22px; }
+.nav-item span { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; font-family: var(--font-display); }
+
+/* ── DASHBOARD ── */
+.balance-card {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.balance-card::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.balance-label {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+
+.balance-amount {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+  margin-bottom: 20px;
+}
+
+.balance-amount.positive { color: var(--green); }
+.balance-amount.negative { color: var(--red); }
+
+.balance-row {
+  display: flex;
+  gap: 16px;
+}
+
+.balance-item {
+  flex: 1;
+  background: var(--bg2);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.balance-item-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+
+.balance-item-val {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.balance-item-val.inc { color: var(--green); }
+.balance-item-val.exp { color: var(--red); }
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 12px;
+}
+
+/* ── TRANSACTION ITEM ── */
+.tx-list { display: flex; flex-direction: column; gap: 8px; }
+
+.tx-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.tx-item:active { border-color: var(--green); }
+
+.tx-dot {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.tx-dot.income { background: rgba(74,222,128,0.12); }
+.tx-dot.expense { background: rgba(248,113,113,0.12); }
+
+.tx-info { flex: 1; min-width: 0; }
+.tx-desc {
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tx-cat {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+
+.tx-right { text-align: right; flex-shrink: 0; }
+.tx-amount {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+}
+.tx-amount.income { color: var(--green); }
+.tx-amount.expense { color: var(--red); }
+.tx-date { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+/* ── FAB ── */
+.fab {
+  position: fixed;
+  bottom: 88px;
+  right: 20px;
+  width: 56px; height: 56px;
+  background: var(--green);
+  color: #000;
+  border: none;
+  border-radius: 50%;
+  font-size: 26px;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(74,222,128,0.35);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  transition: transform 0.15s;
+}
+.fab:active { transform: scale(0.93); }
+
+/* ── MODAL ── */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-backdrop.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 28px 24px 40px;
+  width: 100%;
+  max-width: 480px;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.type-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.type-btn {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text3);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.type-btn.income.active { background: rgba(74,222,128,0.15); border-color: var(--green); color: var(--green); }
+.type-btn.expense.active { background: rgba(248,113,113,0.15); border-color: var(--red); color: var(--red); }
+
+.modal-field {
+  margin-bottom: 14px;
+}
+
+.modal-field label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+
+.modal-field input, .modal-field select, .modal-field textarea {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.modal-field input:focus,
+.modal-field select:focus,
+.modal-field textarea:focus { border-color: var(--green); }
+
+.modal-field select { appearance: none; }
+.modal-field textarea { resize: none; min-height: 80px; }
+
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+.btn-secondary {
+  flex: 1;
+  padding: 13px;
+  background: var(--bg2);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-confirm {
+  flex: 2;
+  padding: 13px;
+  background: var(--green);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-danger {
+  padding: 13px;
+  background: rgba(248,113,113,0.15);
+  color: var(--red);
+  border: 1px solid rgba(248,113,113,0.3);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ── FILTER TABS ── */
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.filter-tab {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text3);
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-tab.active {
+  background: var(--green);
+  color: #000;
+  border-color: var(--green);
+  font-weight: 700;
+}
+
+/* ── NOTES ── */
+.notes-grid { display: flex; flex-direction: column; gap: 10px; }
+
+.note-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.note-card:active { border-color: var(--green); }
+.note-title { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.note-preview { font-size: 12px; color: var(--text3); line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.note-date { font-size: 10px; color: var(--text3); margin-top: 10px; }
+
+/* ── GORDON ── */
+.gordon-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.gordon-avatar {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0a1f0a, #1a4a1a);
+  border: 2px solid var(--green);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 0 12px rgba(74,222,128,0.2);
+}
+
+.gordon-info { flex: 1; }
+.gordon-name { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--green); }
+.gordon-status { font-size: 10px; color: var(--text3); letter-spacing: 1px; }
+
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chat-area::-webkit-scrollbar { width: 3px; }
+.chat-area::-webkit-scrollbar-thumb { background: var(--border); }
+
+.chat-bubble {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+.chat-bubble.user {
+  align-self: flex-end;
+  background: var(--green);
+  color: #000;
+  border-radius: 12px 12px 4px 12px;
+  font-weight: 500;
+}
+
+.chat-bubble.gordon {
+  align-self: flex-start;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 12px 12px 12px 4px;
+}
+
+.chat-bubble.typing {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 14px 20px;
+}
+
+.typing-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text3);
+  animation: bounce 1.2s infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+}
+
+.chat-input-area {
+  padding: 12px 16px 28px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.chat-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 12px 18px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  outline: none;
+  resize: none;
+  max-height: 120px;
+  line-height: 1.4;
+  transition: border-color 0.2s;
+}
+
+.chat-input:focus { border-color: var(--green); }
+
+.chat-send {
+  width: 44px; height: 44px;
+  background: var(--green);
+  color: #000;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.chat-send:active { transform: scale(0.9); }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text3);
+}
+
+.empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state p { font-size: 13px; line-height: 1.6; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  top: 20px; left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 20px;
+  border-radius: 100px;
+  font-size: 13px;
+  z-index: 999;
+  transition: transform 0.3s ease;
+  white-space: nowrap;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: var(--green); color: var(--green); }
+.toast.error { border-color: var(--red); color: var(--red); }
+
+/* ── CATEGORIES CHART ── */
+.cat-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+
+.cat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cat-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--bg2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cat-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s ease;
+}
+
+.cat-bar.income { background: var(--green); }
+.cat-bar.expense { background: var(--red); }
+.cat-label { font-size: 11px; color: var(--text2); min-width: 80px; }
+.cat-val { font-size: 12px; font-family: var(--font-display); font-weight: 700; min-width: 70px; text-align: right; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── LOGIN ── -->
+  <div id="screen-login" class="screen active">
+    <div class="login-logo">
+      <div class="wordmark">Flora Banks</div>
+      <div class="sub">Sistema Financeiro Pessoal</div>
+    </div>
+    <div class="login-card">
+      <div class="tab-switch">
+        <button class="tab-btn active" onclick="switchAuthTab('login')">Entrar</button>
+        <button class="tab-btn" onclick="switchAuthTab('register')">Criar conta</button>
+      </div>
+      <div class="field">
+        <label>Usuário</label>
+        <input id="auth-user" type="text" placeholder="seu_usuario" autocomplete="username"/>
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input id="auth-pass" type="password" placeholder="••••••" autocomplete="current-password"/>
+      </div>
+      <button class="btn-primary" id="auth-btn" onclick="doAuth()">Entrar</button>
+      <div class="msg-error" id="auth-error"></div>
+    </div>
+  </div>
+
+  <!-- ── MAIN APP ── -->
+  <div id="screen-app" class="screen">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content active" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">Flora Banks</div>
+          <div class="topbar-user" id="dash-username"></div>
+        </div>
+        <button class="btn-icon" onclick="doLogout()">⏻</button>
+      </div>
+      <div class="scroll-area">
+        <div class="balance-card">
+          <div class="balance-label">Saldo Atual</div>
+          <div class="balance-amount positive" id="balance-total">R$ 0,00</div>
+          <div class="balance-row">
+            <div class="balance-item">
+              <div class="balance-item-label">Entradas</div>
+              <div class="balance-item-val inc" id="balance-income">R$ 0,00</div>
+            </div>
+            <div class="balance-item">
+              <div class="balance-item-label">Saídas</div>
+              <div class="balance-item-val exp" id="balance-expense">R$ 0,00</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">Categorias</div>
+        <div class="cat-list" id="cat-list"></div>
+
+        <div class="section-title">Recentes</div>
+        <div class="tx-list" id="recent-list"></div>
+      </div>
+    </div>
+
+    <!-- EXTRACT -->
+    <div id="tab-extract" class="tab-content" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="topbar">
+        <div class="topbar-title">Extrato</div>
+      </div>
+      <div class="scroll-area">
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="setExtractFilter(null,this)">Todos</button>
+          <button class="filter-tab" onclick="setExtractFilter('income',this)">Entradas</button>
+          <button class="filter-tab" onclick="setExtractFilter('expense',this)">Saídas</button>
+        </div>
+        <div class="tx-list" id="extract-list"></div>
+      </div>
+      <button class="fab" onclick="openTxModal()">+</button>
+    </div>
+
+    <!-- NOTES -->
+    <div id="tab-notes" class="tab-content" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="topbar">
+        <div class="topbar-title">Anotações</div>
+        <button class="btn-icon" onclick="openNoteModal()">✎</button>
+      </div>
+      <div class="scroll-area">
+        <div class="notes-grid" id="notes-list"></div>
+      </div>
+    </div>
+
+    <!-- GORDON -->
+    <div id="tab-gordon" class="tab-content" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="gordon-header">
+        <div class="gordon-avatar">🌿</div>
+        <div class="gordon-info">
+          <div class="gordon-name">Gordon</div>
+          <div class="gordon-status">AGENTE FINANCEIRO · FLORA BANKS</div>
+        </div>
+        <button class="btn-icon" title="Limpar conversa" onclick="clearGordon()">🗑</button>
+      </div>
+      <div class="chat-area" id="chat-area">
+        <div class="chat-bubble gordon">
+          Olá. Sou o Gordon, seu agente financeiro no Flora Banks.<br/><br/>
+          Posso te dar um panorama do seu saldo, analisar seus gastos, ou responder qualquer dúvida sobre suas finanças. Como posso ajudar?
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" id="chat-input" rows="1" placeholder="Pergunte ao Gordon…"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendGordon()}"
+          oninput="autoResize(this)"></textarea>
+        <button class="chat-send" onclick="sendGordon()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+        </svg>
+        <span>Painel</span>
+      </button>
+      <button class="nav-item" id="nav-extract" onclick="switchTab('extract')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>Extrato</span>
+      </button>
+      <button class="nav-item" id="nav-notes" onclick="switchTab('notes')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 20h9"></path>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+        </svg>
+        <span>Notas</span>
+      </button>
+      <button class="nav-item" id="nav-gordon" onclick="switchTab('gordon')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Gordon</span>
+      </button>
+    </nav>
+  </div>
+</div>
+
+<!-- TRANSACTION MODAL -->
+<div class="modal-backdrop" id="tx-modal">
+  <div class="modal">
+    <div class="modal-title" id="tx-modal-title">Nova Transação</div>
+    <div class="type-toggle">
+      <button class="type-btn income active" id="type-income" onclick="setTxType('income')">↑ Entrada</button>
+      <button class="type-btn expense" id="type-expense" onclick="setTxType('expense')">↓ Saída</button>
+    </div>
+    <div class="modal-field">
+      <label>Valor (R$)</label>
+      <input id="tx-amount" type="number" step="0.01" min="0.01" placeholder="0,00"/>
+    </div>
+    <div class="modal-field">
+      <label>Categoria</label>
+      <input id="tx-category" type="text" placeholder="Ex: Alimentação, Salário…"/>
+    </div>
+    <div class="modal-field">
+      <label>Descrição</label>
+      <input id="tx-desc" type="text" placeholder="Opcional"/>
+    </div>
+    <div class="modal-field">
+      <label>Data</label>
+      <input id="tx-date" type="date"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeTxModal()">Cancelar</button>
+      <button class="btn-danger" id="tx-delete-btn" style="display:none" onclick="deleteTxAction()">Excluir</button>
+      <button class="btn-confirm" onclick="saveTxAction()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTE MODAL -->
+<div class="modal-backdrop" id="note-modal">
+  <div class="modal">
+    <div class="modal-title" id="note-modal-title">Nova Anotação</div>
+    <div class="modal-field">
+      <label>Título</label>
+      <input id="note-title" type="text" placeholder="Título da anotação"/>
+    </div>
+    <div class="modal-field">
+      <label>Conteúdo</label>
+      <textarea id="note-content" rows="5" placeholder="Escreva aqui…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeNoteModal()">Cancelar</button>
+      <button class="btn-danger" id="note-delete-btn" style="display:none" onclick="deleteNoteAction()">Excluir</button>
+      <button class="btn-confirm" onclick="saveNoteAction()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────
+let token = localStorage.getItem('flora_token') || '';
+let username = localStorage.getItem('flora_user') || '';
+let authMode = 'login';
+let currentTab = 'dashboard';
+let extractFilter = null;
+let editingTxId = null;
+let editingNoteId = null;
+let txType = 'income';
+
+// ── API ────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch('/api' + path, opts);
+  return res.json();
+}
+
+// ── TOAST ──────────────────────────────────────────────────────
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => el.className = 'toast', 2500);
+}
+
+// ── AUTH ───────────────────────────────────────────────────────
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', (i===0&&mode==='login')||(i===1&&mode==='register'));
+  });
+  document.getElementById('auth-btn').textContent = mode === 'login' ? 'Entrar' : 'Criar conta';
+  document.getElementById('auth-error').textContent = '';
+}
+
+async function doAuth() {
+  const user = document.getElementById('auth-user').value.trim();
+  const pass = document.getElementById('auth-pass').value;
+  if (!user || !pass) return;
+  const path = authMode === 'login' ? '/auth/login' : '/auth/register';
+  const data = await api('POST', path, { username: user, password: pass });
+  if (!data.ok) {
+    document.getElementById('auth-error').textContent = data.error;
+    return;
+  }
+  if (authMode === 'register') { switchAuthTab('login'); toast('Conta criada! Faça login.','success'); return; }
+  token = data.token;
+  username = data.username;
+  localStorage.setItem('flora_token', token);
+  localStorage.setItem('flora_user', username);
+  enterApp();
+}
+
+function doLogout() {
+  api('POST', '/auth/logout');
+  token = ''; username = '';
+  localStorage.removeItem('flora_token');
+  localStorage.removeItem('flora_user');
+  document.getElementById('screen-login').classList.add('active');
+  document.getElementById('screen-app').classList.remove('active');
+}
+
+function enterApp() {
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+  document.getElementById('dash-username').textContent = username;
+  loadDashboard();
+}
+
+// ── TABS ───────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-content').forEach(t => t.style.display='none');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + tab).style.display = 'flex';
+  document.getElementById('nav-' + tab).classList.add('active');
+  if (tab === 'dashboard') loadDashboard();
+  if (tab === 'extract') loadExtract();
+  if (tab === 'notes') loadNotes();
+  if (tab === 'gordon') loadGordonHistory();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+async function loadDashboard() {
+  const [bal, cats, recent] = await Promise.all([
+    api('GET', '/transactions/balance'),
+    api('GET', '/transactions/categories'),
+    api('GET', '/transactions?limit=5')
+  ]);
+
+  const sign = bal.balance >= 0 ? '' : '';
+  const balEl = document.getElementById('balance-total');
+  balEl.textContent = formatMoney(bal.balance);
+  balEl.className = 'balance-amount ' + (bal.balance >= 0 ? 'positive' : 'negative');
+  document.getElementById('balance-income').textContent = formatMoney(bal.total_income);
+  document.getElementById('balance-expense').textContent = formatMoney(bal.total_expense);
+
+  // categories
+  const catEl = document.getElementById('cat-list');
+  const maxIncome = Math.max(...cats.filter(c=>c.type==='income').map(c=>c.total), 1);
+  const maxExpense = Math.max(...cats.filter(c=>c.type==='expense').map(c=>c.total), 1);
+  if (!cats.length) { catEl.innerHTML = '<div style="color:var(--text3);font-size:12px;">Nenhuma categoria ainda.</div>'; }
+  else {
+    catEl.innerHTML = cats.slice(0,6).map(c => {
+      const pct = c.type==='income' ? (c.total/maxIncome*100) : (c.total/maxExpense*100);
+      return `<div class="cat-item">
+        <div class="cat-label">${c.category||'Outros'}</div>
+        <div class="cat-bar-wrap"><div class="cat-bar ${c.type}" style="width:${pct}%"></div></div>
+        <div class="cat-val ${c.type==='income'?'':''}` + `" style="color:${c.type==='income'?'var(--green)':'var(--red)'}">R$ ${c.total.toFixed(0)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // recent
+  renderTxList(recent, 'recent-list', true);
+}
+
+// ── EXTRACT ───────────────────────────────────────────────────
+async function loadExtract() {
+  const path = extractFilter ? `/transactions?type=${extractFilter}` : '/transactions';
+  const data = await api('GET', path);
+  renderTxList(data, 'extract-list', false);
+}
+
+function setExtractFilter(f, el) {
+  extractFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  loadExtract();
+}
+
+function renderTxList(data, elId, compact) {
+  const el = document.getElementById(elId);
+  if (!data.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📂</div><p>Nenhuma transação aqui ainda.</p></div>`;
+    return;
+  }
+  el.innerHTML = data.map(t => `
+    <div class="tx-item" onclick="openTxEdit(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+      <div class="tx-dot ${t.type}">${t.type==='income'?'↑':'↓'}</div>
+      <div class="tx-info">
+        <div class="tx-desc">${t.description||t.category||'Sem descrição'}</div>
+        <div class="tx-cat">${t.category||''}</div>
+      </div>
+      <div class="tx-right">
+        <div class="tx-amount ${t.type}">${t.type==='income'?'+':'-'} ${formatMoney(t.amount)}</div>
+        <div class="tx-date">${formatDate(t.date)}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── TX MODAL ──────────────────────────────────────────────────
+function openTxModal() {
+  editingTxId = null;
+  txType = 'income';
+  document.getElementById('tx-modal-title').textContent = 'Nova Transação';
+  document.getElementById('tx-amount').value = '';
+  document.getElementById('tx-category').value = '';
+  document.getElementById('tx-desc').value = '';
+  document.getElementById('tx-date').value = todayStr();
+  document.getElementById('tx-delete-btn').style.display = 'none';
+  setTxType('income');
+  document.getElementById('tx-modal').classList.add('open');
+}
+
+function openTxEdit(t) {
+  editingTxId = t.id;
+  txType = t.type;
+  document.getElementById('tx-modal-title').textContent = 'Editar Transação';
+  document.getElementById('tx-amount').value = t.amount;
+  document.getElementById('tx-category').value = t.category || '';
+  document.getElementById('tx-desc').value = t.description || '';
+  document.getElementById('tx-date').value = t.date;
+  document.getElementById('tx-delete-btn').style.display = '';
+  setTxType(t.type);
+  document.getElementById('tx-modal').classList.add('open');
+}
+
+function closeTxModal() { document.getElementById('tx-modal').classList.remove('open'); }
+
+function setTxType(type) {
+  txType = type;
+  document.getElementById('type-income').classList.toggle('active', type==='income');
+  document.getElementById('type-expense').classList.toggle('active', type==='expense');
+}
+
+async function saveTxAction() {
+  const amount = parseFloat(document.getElementById('tx-amount').value);
+  const category = document.getElementById('tx-category').value.trim();
+  const description = document.getElementById('tx-desc').value.trim();
+  const date = document.getElementById('tx-date').value;
+  if (!amount || amount <= 0) { toast('Valor inválido','error'); return; }
+
+  let res;
+  if (editingTxId) {
+    res = await api('PUT', `/transactions/${editingTxId}`, { type: txType, amount, category, description, date });
+  } else {
+    res = await api('POST', '/transactions', { type: txType, amount, category, description, date });
+  }
+
+  if (!res.ok) { toast(res.error, 'error'); return; }
+  closeTxModal();
+  toast(editingTxId ? 'Atualizado!' : 'Adicionado!', 'success');
+  if (currentTab === 'dashboard') loadDashboard();
+  else loadExtract();
+}
+
+async function deleteTxAction() {
+  if (!editingTxId) return;
+  const res = await api('DELETE', `/transactions/${editingTxId}`);
+  if (!res.ok) { toast('Erro ao excluir','error'); return; }
+  closeTxModal();
+  toast('Excluído','success');
+  if (currentTab === 'dashboard') loadDashboard();
+  else loadExtract();
+}
+
+// ── NOTES ─────────────────────────────────────────────────────
+async function loadNotes() {
+  const data = await api('GET', '/notes');
+  const el = document.getElementById('notes-list');
+  if (!data.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📝</div><p>Nenhuma anotação ainda.</p></div>`;
+    return;
+  }
+  el.innerHTML = data.map(n => `
+    <div class="note-card" onclick="openNoteEdit(${JSON.stringify(n).replace(/"/g,'&quot;')})">
+      <div class="note-title">${n.title}</div>
+      <div class="note-preview">${n.content||''}</div>
+      <div class="note-date">${formatDate(n.updated_at?.split('T')[0]||n.updated_at)}</div>
+    </div>`).join('');
+}
+
+function openNoteModal() {
+  editingNoteId = null;
+  document.getElementById('note-modal-title').textContent = 'Nova Anotação';
+  document.getElementById('note-title').value = '';
+  document.getElementById('note-content').value = '';
+  document.getElementById('note-delete-btn').style.display = 'none';
+  document.getElementById('note-modal').classList.add('open');
+}
+
+function openNoteEdit(n) {
+  editingNoteId = n.id;
+  document.getElementById('note-modal-title').textContent = 'Editar Anotação';
+  document.getElementById('note-title').value = n.title;
+  document.getElementById('note-content').value = n.content || '';
+  document.getElementById('note-delete-btn').style.display = '';
+  document.getElementById('note-modal').classList.add('open');
+}
+
+function closeNoteModal() { document.getElementById('note-modal').classList.remove('open'); }
+
+async function saveNoteAction() {
+  const title = document.getElementById('note-title').value.trim();
+  const content = document.getElementById('note-content').value.trim();
+  if (!title) { toast('Título obrigatório','error'); return; }
+  let res;
+  if (editingNoteId) {
+    res = await api('PUT', `/notes/${editingNoteId}`, { title, content });
+  } else {
+    res = await api('POST', '/notes', { title, content });
+  }
+  if (!res.ok) { toast('Erro ao salvar','error'); return; }
+  closeNoteModal();
+  toast('Salvo!','success');
+  loadNotes();
+}
+
+async function deleteNoteAction() {
+  if (!editingNoteId) return;
+  await api('DELETE', `/notes/${editingNoteId}`);
+  closeNoteModal();
+  toast('Excluída','success');
+  loadNotes();
+}
+
+// ── GORDON ────────────────────────────────────────────────────
+async function loadGordonHistory() {
+  const history = await api('GET', '/gordon/history');
+  if (!history.length) return;
+  const area = document.getElementById('chat-area');
+  area.innerHTML = history.map(m => `
+    <div class="chat-bubble ${m.role==='user'?'user':'gordon'}">${escapeHtml(m.content)}</div>
+  `).join('');
+  area.scrollTop = area.scrollHeight;
+}
+
+async function sendGordon() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  input.style.height = '';
+
+  const area = document.getElementById('chat-area');
+  area.innerHTML += `<div class="chat-bubble user">${escapeHtml(msg)}</div>`;
+
+  const typing = document.createElement('div');
+  typing.className = 'chat-bubble gordon typing';
+  typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  area.appendChild(typing);
+  area.scrollTop = area.scrollHeight;
+
+  const data = await api('POST', '/gordon/chat', { message: msg });
+  area.removeChild(typing);
+
+  const reply = data.reply || data.error || 'Erro ao responder.';
+  area.innerHTML += `<div class="chat-bubble gordon">${escapeHtml(reply).replace(/\n/g,'<br/>')}</div>`;
+  area.scrollTop = area.scrollHeight;
+}
+
+async function clearGordon() {
+  await api('DELETE', '/gordon/history');
+  document.getElementById('chat-area').innerHTML = `
+    <div class="chat-bubble gordon">
+      Conversa limpa. Como posso ajudar?
+    </div>`;
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function formatMoney(v) {
+  return 'R$ ' + Math.abs(v).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  if (token) {
+    // validate session
+    api('GET', '/transactions/balance').then(d => {
+      if (d && d.balance !== undefined) {
+        enterApp();
+      } else {
+        localStorage.removeItem('flora_token');
+        localStorage.removeItem('flora_user');
+      }
+    }).catch(() => {});
+  }
+  // close modals on backdrop click
+  document.getElementById('tx-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeTxModal();
+  });
+  document.getElementById('note-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeNoteModal();
+  });
+});
+</script>
+</body>
+</html>
