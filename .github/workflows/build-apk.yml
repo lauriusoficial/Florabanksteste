@@ -7,16 +7,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -29,13 +31,14 @@ jobs:
           npm init -y
           npm install @capacitor/cli @capacitor/core @capacitor/android
 
-      - name: Init and build
+      - name: Build APK
         run: |
           npx cap init "Flora Banks" "com.florabanks.app" --web-dir frontend
           npx cap add android
           cd android
+          rm -rf ~/.gradle/caches
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
